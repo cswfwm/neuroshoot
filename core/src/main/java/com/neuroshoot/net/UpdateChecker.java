@@ -37,6 +37,9 @@ public final class UpdateChecker {
         }
     }
 
+    /** 调试开关：排查更新失败原因时置 true。 */
+    private static final boolean DEBUG = false;
+
     private UpdateChecker() {}
 
     /** 同步查询（调用方需放后台线程）。 */
@@ -69,7 +72,11 @@ public final class UpdateChecker {
             String apkUrl = extractApkUrl(body);
             return new Result(true, tag, latestCode, apkUrl, notes);
         } catch (Exception e) {
-            // 网络异常、解析失败都当作无更新
+            // 网络异常、解析失败都当作无更新（DEBUG 时打印便于排查）
+            if (DEBUG) {
+                System.out.println("UpdateChecker 失败: " + e);
+                e.printStackTrace();
+            }
             return Result.none();
         } finally {
             if (conn != null) conn.disconnect();
@@ -119,19 +126,24 @@ public final class UpdateChecker {
         }
     }
 
-    /** 从 tag（形如 v1.2 或 v1.2.3）解析出构建号，用于和 versionCode 比较。 */
+    /**
+     * 从 tag 解析出与 versionCode 可比较的数值。
+     *
+     * 约定：主版本固定为 1，次版本号直接对应构建号，
+     * 即 v1.0 → 1、v1.1 → 2、v1.2 → 3 …… 这样 tag 与 versionCode 一一对应，
+     * 发版时只改 Version.CODE 与 tag 的次版本号即可。
+     */
     public static int parseCode(String tag) {
         if (tag == null) return 0;
         String t = tag.trim().toLowerCase();
         if (t.startsWith("v")) t = t.substring(1);
-        // 只比较主版本号：v1.2 → 2，v1.10 → 10
         String[] parts = t.split("\\.");
         try {
-            if (parts.length >= 2) return Integer.parseInt(parts[1]);
-            if (parts.length == 1) return Integer.parseInt(parts[0]);
+            int minor = parts.length >= 2 ? Integer.parseInt(parts[1]) : 0;
+            // tag 的次版本号 → 构建号（v1.x 对应 code = x + 1）
+            return minor + 1;
         } catch (NumberFormatException ignored) {
-            // 非数字 tag 视为无版本信息
+            return 0;
         }
-        return 0;
     }
 }
