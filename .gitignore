@@ -1,0 +1,19 @@
+# 构建产物
+build/
+android/build/
+core/build/
+dist/
+.gradle/
+
+# 签名密钥与本地配置
+android/keystore.p12
+local.properties
+
+# IDE
+.idea/
+*.iml
+.cxx/
+
+# 系统文件
+.DS_Store
+Thumbs.db
