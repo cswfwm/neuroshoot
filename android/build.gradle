@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+// 版本号统一从 core 的 Version.java 读取，避免 gradle 与应用内展示不一致
+def versionFile = file("../core/src/main/java/com/neuroshoot/Version.java")
+def vCode = 1
+def vName = "1.0"
+if (versionFile.exists()) {
+    def text = versionFile.getText("UTF-8")
+    def mCode = text =~ /CODE\s*=\s*(\d+)/
+    def mName = text =~ /NAME\s*=\s*"([^"]+)"/
+    if (mCode.find()) vCode = mCode.group(1) as int
+    if (mName.find()) vName = mName.group(1)
+}
+
 android {
     namespace 'com.neuroshoot'
     compileSdk 34
@@ -8,8 +20,8 @@ android {
         applicationId "com.neuroshoot"
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode vCode
+        versionName vName
 
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
